@@ -75,12 +75,14 @@ sub find_card {
     $key =~ s/\s/_/g;
     my $id = id_by_name(session('logged_in_user'));
     
+    #проверяем есть ли ссылка в memcached
     my $link = $memd->get($key);
     if ($link) {
         set_searched($id, $request);
         return $link;
     }
     
+    #выполняем поиск на сайте http://magiccards.info/
     $link = 0;
     my $wq = Web::Query->new("http://magiccards.info/query?q=$request&v=scan&s=cname");
     $wq->find("img")->filter(
@@ -195,7 +197,8 @@ post '/' => require_login sub {
     my $username = session('logged_in_user');
     my $searched = check_search_histroy($username, $request);
     my $img_link = find_card($request) if $request;
-    
+
+    #платим за поиск если он удался и такой поисковый запрос не совершался
     pay_for_search($username) if $img_link and not $searched;
     my $balance = get_balance($username);
     
