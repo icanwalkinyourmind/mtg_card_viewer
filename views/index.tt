@@ -1,0 +1,21 @@
+<div id="page">
+      <div id="content">
+        <div id="header">
+          <h1>MTG card viewer</h1>
+          <h2>Search is not free</h2>
+        </div>
+        <div id="getting-started">
+          <h1>Search card heare<h1>
+          <h2>Hello <% username %> your balance is <% balance %> points</h2>
+          <% IF img_link %>
+            <img alt="search result" align="right" src=<% img_link %>  />
+          <% END %>
+          <form action="">
+            <p>
+               <input type="search" name="search" placeholder="Type request heare" />
+               <input type="submit" value="Find" />
+            </p>
+          </form>
+        </div>
+      </div>
+</div>
