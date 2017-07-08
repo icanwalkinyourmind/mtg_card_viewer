@@ -4,6 +4,9 @@ use Dancer2::Plugin::Database;
 use Dancer2::Plugin::Auth::Extensible;
 use HTML::Entities;
 use Cache::Memcached;
+use Web::Query;
+use LWP::UserAgent;
+use DDP;
 
 =head1 NAME
 
@@ -54,7 +57,18 @@ False если поиск завершился неудачей
 =cut
 
 sub find_card {
+    my $request = shift;
     
+    my $link = 0;
+    my $wq = Web::Query->new("http://magiccards.info/query?q=$request&v=scan&s=cname");
+    $wq->find("img")->filter(
+        sub {
+            my ($i, $elem) = @_;
+            $link = $elem->attr('src') if ($elem->attr('alt') =~ /$request/i);
+        }
+    );
+    
+    return $link;
 }
 
 =head2 set_balance
