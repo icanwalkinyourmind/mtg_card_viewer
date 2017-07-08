@@ -10,7 +10,7 @@
           <% IF img_link %>
             <img alt="search result" align="right" src=<% img_link %>  />
           <% END %>
-          <form action="">
+          <form action="" method='post'>
             <p>
                <input type="search" name="search" placeholder="Type request heare" />
                <input type="submit" value="Find" />

@@ -2,11 +2,8 @@ package mtg_card_viewer;
 use Dancer2;
 use Dancer2::Plugin::Database;
 use Dancer2::Plugin::Auth::Extensible;
-use HTML::Entities;
 use Cache::Memcached;
 use Web::Query;
-use LWP::UserAgent;
-use DDP;
 
 =head1 NAME
 
@@ -18,6 +15,11 @@ Version 0.01
 
 =cut
 
+my $memd = new Cache::Memcached {
+    'servers' => [ "0.0.0.0:11211"],
+    'debug' => 0,
+    'compress_threshold' => 10_000,
+};
 
 our $VERSION = '0.1';
 
@@ -45,7 +47,7 @@ sub id_by_name {
 
 =cut
 
-sub _check_search_histroy {
+sub check_search_histroy {
     
 }
 
@@ -58,16 +60,21 @@ False если поиск завершился неудачей
 
 sub find_card {
     my $request = shift;
+    $request = "\L$request";
     
-    my $link = 0;
+    my $link = $memd->get($request);
+    return $link if $link;
+    
+    $link = 0;
     my $wq = Web::Query->new("http://magiccards.info/query?q=$request&v=scan&s=cname");
     $wq->find("img")->filter(
         sub {
             my ($i, $elem) = @_;
-            $link = $elem->attr('src') if ($elem->attr('alt') =~ /$request/i);
+            $link = $elem->attr('src') if ($elem->attr('alt') =~ /^$request$/i);
         }
     );
     
+    $memd->set($request, $link) if $link;
     return $link;
 }
 
@@ -84,13 +91,13 @@ sub set_balance {
     database->quick_update('users', {id => $id}, {balance => $new_balance});
 }
 
-=head2 check_balance
+=head2 get_balance
 
 Функция на вход принимает имя пользователя, и вовзращает его текущий баланс
 
 =cut
 
-sub check_balance {
+sub get_balance {
     my $username = shift;
     my $id = id_by_name($username);
     return database->quick_lookup('users', { id => $id }, 'balance');
@@ -103,7 +110,11 @@ sub check_balance {
 =cut
 
 sub pay_for_search {
+    my $username = shift;
     
+    my $price = 10;
+    my $balance = get_balance($username);
+    set_balance($username, $balance-$price);
 }
 
 =head1 PROCESSING REQUESTS
@@ -115,7 +126,15 @@ sub pay_for_search {
 =cut
 
 get '/' => require_login sub {
-    template 'index' => { 'title' => 'mtg_card_viewer' };
+    my $request = params->{search};
+    my $username = session('logged_in_user');
+    my $balance = get_balance($username);
+      
+    template 'index' => {
+      title => 'mtg_card_viewer',
+      username => $username,
+      balance => $balance,
+    };
 };
 
 =head2 get '/login'
@@ -128,14 +147,26 @@ get '/login' => sub {
     return template 'login'; 
 };
 
-=head2 post '/'
+=head2 post '/login'
 
-Обработка поискового запроса и генерация ответа
+Обработка поискового запроса
 
 =cut
 
 post '/' => require_login sub {
+    my $request = params->{search};
+    my $username = session('logged_in_user');
+    my $img_link = find_card($request) if $request;
+    pay_for_search($username) if $img_link;
+    my $balance = get_balance($username);
+    
       
+    template 'index' => {
+      title => 'mtg_card_viewer',
+      username => $username,
+      balance => $balance-100,
+      img_link => $img_link,  
+    };
 };
 
 =head2 post '/login'
