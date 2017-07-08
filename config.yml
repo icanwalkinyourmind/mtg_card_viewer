@@ -53,11 +53,11 @@ engines:
 plugins:
   Database:
     driver: 'mysql'
-    database: 'my_notes'
+    database: 'mtg_viewer'
     host: 'localhost'
     port: 3306
-    username: 'my_notes'
-    password: 'my_notes'
+    username: 'mtg_viewer'
+    password: 'mtg_viewer'
     dbi_params:
       RaiseError: 1
       AutoCommit: 1
@@ -65,6 +65,7 @@ plugins:
     log_queries: 1
   Auth::Extensible:
     no_default_pages: 1
+    no_login_handler: 1
     realms:
       users:
         provider: 'Database'

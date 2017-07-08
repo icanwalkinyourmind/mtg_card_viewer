@@ -84,8 +84,18 @@ sub pay_for_search {
 
 =cut
 
-get '/' => sub  {
+get '/' => require_login sub {
     template 'index' => { 'title' => 'mtg_card_viewer' };
+};
+
+=head2 get '/login'
+
+Генерация страницы авторизации
+
+=cut
+
+get '/login' => sub {
+    return template 'login'; 
 };
 
 =head2 post '/'
@@ -94,8 +104,27 @@ get '/' => sub  {
 
 =cut
 
-post '/' => sub {
+post '/' => require_login sub {
       
+};
+
+=head2 post '/login'
+
+Авторизация пользвателя
+
+=cut
+
+post '/login' => sub {
+        my ($success, $realm) = authenticate_user(
+            params->{username}, params->{password}
+        );
+        if ($success) {
+            session logged_in_user => params->{username};
+            session logged_in_user_realm => $realm;
+            redirect '/';
+        } else {
+            return template 'login' => {err => ['Wrong username or password']};
+        }
 };
 
 true;
