@@ -4,6 +4,7 @@ use Dancer2::Plugin::Database;
 use Dancer2::Plugin::Auth::Extensible;
 use Cache::Memcached;
 use Web::Query;
+use v5.16;
 
 =head1 NAME
 
@@ -48,7 +49,16 @@ sub id_by_name {
 =cut
 
 sub check_search_histroy {
+    my $username = shift;
+    my $request = shift;
+    $request = "\L$request";
+    my $id = id_by_name($username);
     
+    my $sth = database->prepare("select * from searched where request = ? and user_id = ?;");
+    $sth->execute($request, $id);
+    my $array_ref = $sth->fetchall_arrayref();
+    
+    return scalar @{$array_ref}; 
 }
 
 =head2 find_card
@@ -60,10 +70,16 @@ False если поиск завершился неудачей
 
 sub find_card {
     my $request = shift;
-    $request = "\L$request";
+    $request = fc($request);
+    my $key = $request;
+    $key =~ s/\s/_/g;
+    my $id = id_by_name(session('logged_in_user'));
     
-    my $link = $memd->get($request);
-    return $link if $link;
+    my $link = $memd->get($key);
+    if ($link) {
+        set_searched($id, $request);
+        return $link;
+    }
     
     $link = 0;
     my $wq = Web::Query->new("http://magiccards.info/query?q=$request&v=scan&s=cname");
@@ -74,7 +90,11 @@ sub find_card {
         }
     );
     
-    $memd->set($request, $link) if $link;
+    if ($link) {
+       $memd->set($key, $link);
+       set_searched($id, $request)
+    }
+    
     return $link;
 }
 
@@ -117,6 +137,23 @@ sub pay_for_search {
     set_balance($username, $balance-$price);
 }
 
+=head2 set_searched
+
+Добавляет запись в историю поиска
+
+=cut
+
+sub set_searched {
+    my $id =shift;
+    my $request = shift;
+    my $username = session('logged_in_user');
+    my $searched = check_search_histroy($username, $request);
+    
+    unless ($searched) { 
+        database->quick_insert('searched', {'user_id' => $id, 'request' => $request});
+    }
+}
+
 =head1 PROCESSING REQUESTS
 
 =head2 get '/'
@@ -156,16 +193,20 @@ get '/login' => sub {
 post '/' => require_login sub {
     my $request = params->{search};
     my $username = session('logged_in_user');
+    my $searched = check_search_histroy($username, $request);
     my $img_link = find_card($request) if $request;
-    pay_for_search($username) if $img_link;
+    
+    pay_for_search($username) if $img_link and not $searched;
     my $balance = get_balance($username);
     
+    my $err = "wrong requset" unless $img_link;
       
     template 'index' => {
       title => 'mtg_card_viewer',
       username => $username,
-      balance => $balance-100,
-      img_link => $img_link,  
+      balance => $balance,
+      img_link => $img_link,
+      err => $err,
     };
 };
 

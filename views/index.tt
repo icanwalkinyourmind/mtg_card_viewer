@@ -14,6 +14,9 @@
             <p>
                <input type="search" name="search" placeholder="Type request heare" />
                <input type="submit" value="Find" />
+               <% IF err %>
+                 <h3 alt="search result" align="left"> <% err %> <h3/>
+               <% END %>
             </p>
           </form>
         </div>
