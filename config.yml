@@ -59,6 +59,7 @@ plugins:
     username: 'mtg_viewer'
     password: 'mtg_viewer'
     dbi_params:
+      mysql_enable_utf8: 1
       RaiseError: 1
       AutoCommit: 1
     on_connect_do: ["SET NAMES 'utf8'", "SET CHARACTER SET 'utf8'"]

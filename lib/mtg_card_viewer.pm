@@ -26,12 +26,13 @@ our $VERSION = '0.1';
 
 =head2 id_by_name
 
-Функция на вход принимет имя пользователя и возвращает его id в базе данных
+Функция на вход принимает имя пользователя и возвращает его id в базе данных
 
 =cut
 
 sub id_by_name {
-
+    my $name = shift;
+    database->quick_lookup('users', { username => $name }, 'id' );
 }
 
 =head2 check_serach_history
@@ -56,6 +57,19 @@ sub find_card {
     
 }
 
+=head2 set_balance
+
+Процедура на вход принимает имя пользовталея и целое число, и устанавливает баланс пользователя равынй ему
+
+=cut
+
+sub set_balance {
+    my $username = shift;
+    my $new_balance = shift;
+    my $id = id_by_name($username);
+    database->quick_update('users', {id => $id}, {balance => $new_balance});
+}
+
 =head2 check_balance
 
 Функция на вход принимает имя пользователя, и вовзращает его текущий баланс
@@ -63,7 +77,9 @@ sub find_card {
 =cut
 
 sub check_balance {
-    
+    my $username = shift;
+    my $id = id_by_name($username);
+    return database->quick_lookup('users', { id => $id }, 'balance');
 }
 
 =head2
