@@ -69,16 +69,16 @@ False если поиск завершился неудачей
 =cut
 
 sub find_card {
+    my $username = shift;
     my $request = shift;
     $request = fc($request);
     my $key = $request;
     $key =~ s/\s/_/g;
-    my $id = id_by_name(session('logged_in_user'));
     
     #проверяем есть ли ссылка в memcached
     my $link = $memd->get($key);
     if ($link) {
-        set_searched($id, $request);
+        set_searched($username, $request);
         return $link;
     }
     
@@ -94,7 +94,7 @@ sub find_card {
     
     if ($link) {
        $memd->set($key, $link);
-       set_searched($id, $request)
+       set_searched($username, $request)
     }
     
     return $link;
@@ -152,9 +152,10 @@ sub pay_for_search {
 =cut
 
 sub set_searched {
-    my $id =shift;
+    my $username = shift;
     my $request = shift;
-    my $username = session('logged_in_user');
+    
+    my $id = id_by_name($username);
     my $searched = check_search_histroy($username, $request);
     
     unless ($searched) { 
@@ -202,7 +203,7 @@ post '/' => require_login sub {
     my $request = params->{search};
     my $username = session('logged_in_user');
     my $searched = check_search_histroy($username, $request);
-    my $img_link = find_card($request) if $request;
+    my $img_link = find_card($username, $request) if $request;
     my @err;
     
     #платим за поиск если он удался и такой поисковый запрос не совершался

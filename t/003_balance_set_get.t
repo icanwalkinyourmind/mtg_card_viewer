@@ -10,6 +10,6 @@ my $new_balance = 2000;
 
 mtg_card_viewer::set_balance('admin', $new_balance);
 
-my $balance = mtg_card_viewer::check_balance('admin');
+my $balance = mtg_card_viewer::get_balance('admin');
 
 is($new_balance, $balance, 'Balnce set and get OK');

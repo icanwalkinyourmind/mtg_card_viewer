@@ -6,8 +6,8 @@ use utf8;
 use mtg_card_viewer;
 use Test::More tests => 2;
 
-my $link = mtg_card_viewer::find_card('Python');
+my $link = mtg_card_viewer::find_card('admin', 'Python');
 is ($link, "http://magiccards.info/scans/en/6e/150.jpg", 'Find OK');
 
-$link = mtg_card_viewer::find_card('Tom Yorke');
+$link = mtg_card_viewer::find_card('admin', 'Tom Yorke');
 ok (!$link, 'Wrong card name OK');
