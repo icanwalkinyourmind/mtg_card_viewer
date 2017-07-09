@@ -63,7 +63,7 @@ plugins:
       RaiseError: 1
       AutoCommit: 1
     on_connect_do: ["SET NAMES 'utf8'", "SET CHARACTER SET 'utf8'"]
-    log_queries: 1
+    log_queries: 0
   Auth::Extensible:
     no_default_pages: 1
     no_login_handler: 1
