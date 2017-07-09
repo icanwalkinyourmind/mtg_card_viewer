@@ -134,8 +134,8 @@ sub get_balance {
 
 sub pay_for_search {
     my $username = shift;
+    my $price = shift;
     
-    my $price = 1000;
     my $balance = get_balance($username);
     if ($balance >= $price) {
         set_balance($username, $balance-$price);
@@ -207,7 +207,7 @@ post '/' => require_login sub {
     
     #платим за поиск если он удался и такой поисковый запрос не совершался
     my $payed = 1;
-    $payed = pay_for_search($username) if $img_link and not $searched;
+    $payed = pay_for_search($username, 100) if $img_link and not $searched;
     my $balance = get_balance($username);
     
     #проверяем результаты поиска и оплаты
