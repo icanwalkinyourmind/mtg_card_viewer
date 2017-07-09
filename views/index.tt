@@ -15,7 +15,13 @@
                <input type="search" name="search" placeholder="Type request heare" />
                <input type="submit" value="Find" />
                <% IF err %>
-                 <h3 alt="search result" align="left"> <% err %> <h3/>
+                 <center class="error">
+                  <ol>
+                    <h2>Errors:<h2>
+                    <%FOR e IN err %>
+                      <li><% e %></li>
+                    <% END %></ol
+                  ></center>
                <% END %>
             </p>
           </form>

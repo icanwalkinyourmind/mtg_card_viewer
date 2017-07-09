@@ -127,16 +127,22 @@ sub get_balance {
 
 =head2
 
-Процедура на вход принимает имя пользователя, и реализует списание с его баланса средств за поиск карты
+Функция на вход принимает имя пользователя, и реализует списание с его баланса средств за поиск карты
+и возвращает True или False в зависимоти от того удалось ли списать средства
 
 =cut
 
 sub pay_for_search {
     my $username = shift;
     
-    my $price = 10;
+    my $price = 1000;
     my $balance = get_balance($username);
-    set_balance($username, $balance-$price);
+    if ($balance >= $price) {
+        set_balance($username, $balance-$price);
+        return 1;
+    } else {
+        return 0;
+    }
 }
 
 =head2 set_searched
@@ -197,19 +203,27 @@ post '/' => require_login sub {
     my $username = session('logged_in_user');
     my $searched = check_search_histroy($username, $request);
     my $img_link = find_card($request) if $request;
-
+    my @err;
+    
     #платим за поиск если он удался и такой поисковый запрос не совершался
-    pay_for_search($username) if $img_link and not $searched;
+    my $payed = 1;
+    $payed = pay_for_search($username) if $img_link and not $searched;
     my $balance = get_balance($username);
     
-    my $err = "wrong requset" unless $img_link;
+    #проверяем результаты поиска и оплаты
+    push @err, "can't find card" unless $img_link;
+    unless ($payed) {
+        $img_link = 0;
+        push @err, "not enough points";
+    }
+    
       
     template 'index' => {
       title => 'mtg_card_viewer',
       username => $username,
       balance => $balance,
       img_link => $img_link,
-      err => $err,
+      err => @err,
     };
 };
 
